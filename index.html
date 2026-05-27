@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Pesquisa — Imersão GKT Legado</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bricolage+Grotesque:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  /* ===== IDENTIDADE GKT LEGADO ===== */
+  :root {
+    --color-bg: #050e0a;
+    --color-bg-2: #0a1e15;
+    --color-bot-bubble: #16241d;
+    --color-bot-text: #f0f5f2;
+    --color-user-bubble: #16a34a;
+    --color-user-text: #ffffff;
+    --color-accent: #22c55e;
+    --color-accent-soft: rgba(34, 197, 94, 0.15);
+    --color-avatar-bg: #22c55e;
+    --color-avatar-fg: #050e0a;
+    --color-text: #f0f5f2;
+    --color-muted: #7a8a85;
+    --color-border: #1f2e28;
+    --color-input-bg: #0f1814;
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-display: 'Space Grotesk', 'Inter', sans-serif;
+    --font-question: 'Bricolage Grotesque', 'Inter', sans-serif;
+    --radius: 14px;
+    --max-width: 720px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    overscroll-behavior: none;
+  }
+
+  body {
+    font-family: var(--font-family);
+    background: var(--color-bg);
+    color: var(--color-text);
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden; /* Garante que só o <main> rola, evitando conflitos */
+  }
+
+  /* Brilho de fundo (gradiente verde discreto) */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at top, var(--color-bg-2) 0%, transparent 60%);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* Logo do gorila centralizada ao fundo, com opacidade reduzida */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: url("assets/gorila.png");
+    background-size: 65vmin auto;
+    background-position: center 55%;
+    background-repeat: no-repeat;
+    opacity: 0.30;
+    z-index: 0;
+    pointer-events: none;
+    transform-origin: center 55%;
+    transition: opacity 0.5s ease, filter 0.6s ease;
+    will-change: opacity, filter, transform;
+  }
+
+  /* Brilho intenso quando o mouse está sobre o gorila */
+  body.gorila-hover::after {
+    opacity: 0.62;
+    filter:
+      brightness(1.7)
+      saturate(1.4)
+      drop-shadow(0 0 40px rgba(34, 197, 94, 0.55))
+      drop-shadow(0 0 80px rgba(34, 197, 94, 0.35));
+  }
+
+  /* Giro de 360° (dispara uma vez ao entrar no hover) */
+  body.gorila-spin::after {
+    animation: gorila-spin 1.4s ease-in-out;
+  }
+  @keyframes gorila-spin {
+    0%   { transform: rotate(0deg) scale(1); }
+    50%  { transform: rotate(180deg) scale(1.06); }
+    100% { transform: rotate(360deg) scale(1); }
+  }
+
+  /* Acessibilidade — respeita quem prefere menos animação */
+  @media (prefers-reduced-motion: reduce) {
+    body::after { transition: none; }
+    body.gorila-spin::after { animation: none; }
+  }
+
+  /* Garante que o conteúdo fica acima do fundo */
+  header, main { position: relative; z-index: 1; }
+
+  header {
+    background: rgba(5, 14, 10, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--color-border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .brand-logo {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: var(--color-avatar-bg);
+    color: var(--color-avatar-fg);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    font-family: var(--font-display);
+  }
+
+  .brand-title {
+    font-size: 15px;
+    font-weight: 700;
+    font-family: var(--font-display);
+    letter-spacing: 0.5px;
+  }
+  .brand-title .accent { color: var(--color-accent); }
+  .brand-subtitle {
+    font-size: 12px;
+    color: var(--color-muted);
+    margin-top: 2px;
+  }
+
+  .progress-track {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: transparent;
+  }
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--color-accent);
+    transition: width .4s ease;
+  }
+
+  main {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 20px 16px 32px;
+    display: flex;
+    justify-content: center;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge antigo */
+  }
+  main::-webkit-scrollbar { /* Chrome/Safari/Edge */
+    display: none;
+    width: 0;
+    height: 0;
+  }
+  body {
+    scrollbar-width: none;
+  }
+  body::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  .chat {
+    width: 100%;
+    max-width: var(--max-width);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* Espaçador real (div) garante que scrollHeight crescce —
+     padding-bottom em flex item tem bug de scrollHeight em alguns navegadores */
+  .scroll-spacer {
+    height: 90vh;
+    flex-shrink: 0;
+    pointer-events: none;
+  }
+  .chat.finished .scroll-spacer {
+    display: none;
+  }
+
+
+  .row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    animation: slideIn .35s ease-out;
+  }
+  .row.bot { justify-content: flex-start; }
+  .row.user { justify-content: flex-end; }
+
+  /* Pergunta atual fica posicionada a 50% do topo (meio da tela) */
+  .row.current-question {
+    scroll-margin-top: 50vh;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--color-avatar-bg);
+    color: var(--color-avatar-fg);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+    font-size: 12px;
+  }
+
+  .bubble {
+    max-width: 78%;
+    padding: 14px 16px;
+    border-radius: var(--radius);
+    font-size: 15px;
+    line-height: 1.45;
+    word-wrap: break-word;
+  }
+  .row.bot .bubble {
+    background: var(--color-bot-bubble);
+    color: var(--color-bot-text);
+    border-bottom-left-radius: 4px;
+    border: 1px solid var(--color-border);
+    font-family: var(--font-question);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    font-size: 16px;
+    line-height: 1.4;
+  }
+  .row.user .bubble {
+    background: var(--color-user-bubble);
+    color: var(--color-user-text);
+    border-bottom-right-radius: 4px;
+    font-weight: 500;
+    box-shadow: 0 4px 16px rgba(34, 197, 94, 0.25);
+  }
+  .bubble .hint {
+    display: block;
+    font-size: 13px;
+    color: var(--color-muted);
+    font-style: italic;
+    margin-top: 4px;
+  }
+
+  /* Typing indicator */
+  .typing {
+    display: inline-flex;
+    gap: 4px;
+    padding: 14px 16px;
+    background: var(--color-bot-bubble);
+    border-radius: var(--radius);
+    border-bottom-left-radius: 4px;
+  }
+  .typing span {
+    width: 6px; height: 6px;
+    background: var(--color-muted);
+    border-radius: 50%;
+    animation: blink 1.2s infinite;
+  }
+  .typing span:nth-child(2) { animation-delay: .15s; }
+  .typing span:nth-child(3) { animation-delay: .3s; }
+  @keyframes blink {
+    0%, 80%, 100% { opacity: .3; }
+    40% { opacity: 1; }
+  }
+
+  /* Caixa de texto (aparece dentro do chat, junto da pergunta) */
+  .text-input-row {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 4px;
+  }
+  .text-input-row .wrap-inner {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    width: 78%;
+  }
+  .text-input {
+    flex: 1;
+    background: var(--color-input-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--color-text);
+    outline: none;
+    resize: none;
+    min-height: 50px;
+    max-height: 160px;
+  }
+  .text-input:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-soft);
+  }
+  .text-input::placeholder {
+    color: var(--color-muted);
+  }
+
+  .send-btn {
+    width: 50px; height: 50px;
+    border: none;
+    border-radius: var(--radius);
+    background: var(--color-accent);
+    color: var(--color-avatar-fg);
+    font-size: 20px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: opacity .15s, transform .1s;
+    box-shadow: 0 4px 16px rgba(34, 197, 94, 0.3);
+  }
+  .send-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .send-btn:hover:not(:disabled) { opacity: .92; }
+  .send-btn:active:not(:disabled) { transform: scale(.96); }
+
+  @media (max-width: 640px) {
+    .text-input-row .wrap-inner { width: 92%; }
+  }
+
+  /* Controles dentro do chat (escala + opções) — alinhados à direita como "respostas potenciais" */
+  .inline-controls {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 4px;
+  }
+  .inline-controls .wrap-inner {
+    max-width: 78%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  /* Botões de opção (Sim/Não, Excelente/Boa, etc) */
+  .option-btn {
+    background: var(--color-user-bubble);
+    color: var(--color-user-text);
+    border: 2px solid transparent;
+    border-radius: var(--radius);
+    padding: 12px 18px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: transform .1s, opacity .15s, box-shadow .15s, background .2s, border-color .2s;
+    box-shadow: 0 2px 8px rgba(34, 197, 94, 0.2);
+  }
+  .option-btn:hover { opacity: .92; box-shadow: 0 4px 16px rgba(34, 197, 94, 0.35); }
+  .option-btn:active { transform: scale(.97); }
+
+  /* Múltipla escolha — estado "não selecionado" fica neutro; ao marcar vira verde */
+  .multi-wrap {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+  }
+  .multi-option-btn {
+    background: var(--color-bot-bubble);
+    color: var(--color-text);
+    border: 2px solid var(--color-border);
+    box-shadow: none;
+    opacity: 0.85;
+  }
+  .multi-option-btn:hover {
+    border-color: var(--color-accent);
+    opacity: 1;
+  }
+  .multi-option-btn.selected {
+    background: var(--color-user-bubble);
+    color: var(--color-user-text);
+    border-color: var(--color-accent);
+    box-shadow: 0 4px 16px rgba(34, 197, 94, 0.35);
+    opacity: 1;
+  }
+  .multi-option-btn.selected::before {
+    content: "✓ ";
+    font-weight: 700;
+  }
+
+  /* Botão "Continuar →" — desabilitado até marcar alguma opção */
+  .confirm-btn {
+    margin-top: 4px;
+    background: var(--color-accent);
+    font-weight: 600;
+  }
+  .confirm-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  .confirm-btn:disabled:hover { opacity: 0.35; box-shadow: none; }
+
+  /* Botões de escala (0-10 / 1-5) */
+  .scale-grid {
+    display: grid;
+    gap: 6px;
+    width: 100%;
+  }
+  .scale-grid.scale-10 { grid-template-columns: repeat(11, minmax(0, 1fr)); }
+  .scale-grid.scale-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .scale-btn {
+    aspect-ratio: 1;
+    border: 1px solid var(--color-border);
+    background: #000;
+    color: #ffffff;
+    border-radius: 10px;
+    font-size: 17px;
+    font-weight: 800;
+    font-family: var(--font-display);
+    cursor: pointer;
+    transition: all .25s ease;
+    min-height: 42px;
+    /* Brilho neon verde sutil contínuo */
+    text-shadow:
+      0 0 6px rgba(34, 197, 94, 0.55),
+      0 0 14px rgba(34, 197, 94, 0.25);
+  }
+  .scale-btn:hover {
+    border-color: var(--color-accent);
+    /* Brilho intenso no hover — efeito neon "aceso" */
+    text-shadow:
+      0 0 8px rgba(34, 197, 94, 1),
+      0 0 18px rgba(34, 197, 94, 0.75),
+      0 0 32px rgba(34, 197, 94, 0.45);
+    box-shadow:
+      0 0 12px rgba(34, 197, 94, 0.3),
+      inset 0 0 8px rgba(34, 197, 94, 0.12);
+  }
+  .scale-btn:active {
+    background: var(--color-accent);
+    color: #000;
+    border-color: var(--color-accent);
+    text-shadow: none;
+    box-shadow: 0 0 24px rgba(34, 197, 94, 0.6);
+  }
+  .scale-grid.scale-10 .scale-btn { font-size: 15px; }
+
+  /* Done screen */
+  .done {
+    text-align: center;
+    padding: 80px 24px 80px;
+    max-width: 620px;
+    margin: 0 auto;
+    animation: doneFadeIn 1s ease-out;
+  }
+  @keyframes doneFadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .done .check {
+    width: 92px; height: 92px;
+    background: var(--color-accent);
+    color: var(--color-avatar-fg);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 52px;
+    margin: 0 auto 36px;
+    box-shadow:
+      0 0 30px rgba(34, 197, 94, 0.6),
+      0 0 70px rgba(34, 197, 94, 0.35);
+    animation: checkPop .8s cubic-bezier(.34, 1.56, .64, 1) .2s both;
+  }
+  @keyframes checkPop {
+    from { transform: scale(0); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+  .done h2 {
+    font-family: 'Bebas Neue', 'Space Grotesk', sans-serif;
+    font-size: clamp(56px, 11vw, 110px);
+    margin-bottom: 24px;
+    font-weight: 400; /* Bebas Neue só tem 1 peso, mas é grossa naturalmente */
+    letter-spacing: 4px;
+    color: var(--color-accent);
+    line-height: 0.95;
+    animation: glowPulse 2.4s ease-in-out infinite alternate;
+  }
+  @keyframes glowPulse {
+    from {
+      text-shadow:
+        0 0 20px rgba(34, 197, 94, 0.7),
+        0 0 40px rgba(34, 197, 94, 0.4),
+        0 0 80px rgba(34, 197, 94, 0.25);
+    }
+    to {
+      text-shadow:
+        0 0 30px rgba(34, 197, 94, 1),
+        0 0 60px rgba(34, 197, 94, 0.75),
+        0 0 110px rgba(34, 197, 94, 0.5);
+    }
+  }
+  .done .thanks-msg {
+    color: var(--color-text);
+    font-size: 18px;
+    line-height: 1.6;
+    margin-bottom: 40px;
+    font-family: var(--font-question);
+    font-weight: 500;
+    max-width: 520px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .done .verse {
+    border-left: 3px solid var(--color-accent);
+    padding: 22px 26px;
+    margin: 36px auto;
+    max-width: 480px;
+    background: rgba(34, 197, 94, 0.08);
+    border-radius: 0 12px 12px 0;
+    text-align: left;
+    box-shadow: 0 0 30px rgba(34, 197, 94, 0.08);
+  }
+  .done .verse blockquote {
+    font-family: var(--font-question);
+    font-style: italic;
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--color-text);
+    margin: 0 0 10px 0;
+  }
+  .done .verse-ref {
+    display: block;
+    font-size: 13px;
+    color: var(--color-accent);
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .done .signature {
+    color: var(--color-accent);
+    font-size: 16px;
+    margin-top: 36px;
+    font-style: italic;
+    font-weight: 500;
+    opacity: 0.9;
+  }
+  @media (max-width: 480px) {
+    .done { padding: 50px 20px 60px; }
+    .done h2 { letter-spacing: 2px; }
+    .done .thanks-msg { font-size: 16px; }
+    .done .verse blockquote { font-size: 16px; }
+  }
+
+  @media (max-width: 480px) {
+    .bubble { max-width: 82%; font-size: 14px; }
+    header { padding: 12px 16px; }
+    .scale-wrap.scale-10 .scale-btn { min-height: 38px; font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand-logo">GKT</div>
+  <div>
+    <div class="brand-title">IMERSÃO.GKT <span class="accent">LEGADO</span></div>
+    <div class="brand-subtitle">Pesquisa pós-evento</div>
+  </div>
+  <div class="progress-track"><div class="progress-fill" id="progress"></div></div>
+</header>
+
+<main>
+  <div class="chat" id="chat"></div>
+</main>
+
+<script>
+/* =================================================================
+   CONFIGURAÇÃO — edite aqui as perguntas
+   ================================================================= */
+
+const EVENT_NAME = "Imersão GKT Legado";
+
+// Endpoint do Google Apps Script — recebe as respostas e grava no Sheets
+const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbymfHZmYyT-vLQ7QFdXMKlOED3XuQbsTZgsoYGIAo8mESWLF2WTLiPvb0zxEZfJIRjlFQ/exec";
+
+const QUESTIONS = [
+  // ============== Identificação (antes do NPS) ==============
+  {
+    id: "boas_vindas",
+    type: "message",
+    text: "Antes da gente começar, preciso saber quem é você 🦍"
+  },
+  {
+    id: "nome",
+    type: "text",
+    text: "Qual seu nome completo?"
+  },
+  {
+    id: "email",
+    type: "text",
+    text: "Qual seu melhor email?"
+  },
+  {
+    id: "telefone",
+    type: "text",
+    text: "Qual seu telefone (com DDD)?"
+  },
+
+  // ============== Pesquisa ==============
+  {
+    id: "nps",
+    type: "scale",
+    range: [0, 10],
+    text: "De 0 a 10, quanto você recomendaria a Imersão GKT para outra pessoa que deseja mudar o seu comportamento e construir resultados reais no mercado financeiro?"
+  },
+  {
+    id: "nps_motivo",
+    type: "text",
+    text: "Qual foi o principal motivo da sua nota?"
+  },
+  {
+    id: "expectativa",
+    type: "options",
+    text: "O evento atendeu suas expectativas?",
+    options: ["Superou muito", "Superou", "Atendeu", "Ficou abaixo"]
+  },
+  {
+    id: "avaliacao_pontos",
+    type: "group",
+    range: [1, 5],
+    text: "Como você avalia os seguintes pontos do evento?",
+    hint: "Escala de 1 a 5",
+    items: [
+      { id: "conteudo",        label: "Conteúdo apresentado" },
+      { id: "clareza",         label: "Clareza das explicações" },
+      { id: "aplicabilidade",  label: "Aplicabilidade prática" },
+      { id: "organizacao",     label: "Organização do evento" },
+      { id: "palestrantes",    label: "Sobre os palestrantes" },
+      { id: "energia",         label: "Energia do ambiente" },
+      { id: "network",         label: "Network" },
+      { id: "estrutura",       label: "Estrutura do local" },
+      { id: "tempo",           label: "Tempo do evento" },
+      { id: "suporte",         label: "Suporte da equipe" }
+    ]
+  },
+  {
+    id: "insight",
+    type: "text",
+    text: "Qual foi o insight, aprendizado ou virada de chave mais valiosa que você teve na Imersão?"
+  },
+  {
+    id: "destravou",
+    type: "text",
+    text: "O que você sente que destravou ou clareou para você durante o evento?"
+  },
+  {
+    id: "sentimento_pos",
+    type: "options",
+    text: "Após a Imersão GKT, como você se sente em relação à sua vida no mercado financeiro?",
+    options: ["Muito mais confiante", "Mais confiante", "Igual", "Menos confiante"]
+  },
+  {
+    id: "aplicacao",
+    type: "options",
+    text: "Você já conseguiu aplicar algo que você aprendeu no evento?",
+    options: ["Sim, várias coisas", "Sim, algumas coisas", "Ainda não, mas pretendo aplicar", "Ainda não consegui aplicar"],
+    followups: [
+      { condition: "Sim, várias coisas",   question: { id: "aplicacao_oque", type: "text", text: "O que você aplicou que deu certo?" } },
+      { condition: "Sim, algumas coisas",  question: { id: "aplicacao_oque", type: "text", text: "O que você aplicou que deu certo?" } }
+    ]
+  },
+  {
+    id: "resultados",
+    type: "multi_options",
+    text: "Você já teve resultado com algo que aprendeu na Imersão GKT?",
+    hint: "Marque todos os tipos que se aplicam",
+    options: [
+      {
+        value: "Resultado financeiro",
+        followup: { id: "resultados_financeiro", type: "text", text: "Qual valor financeiro você já fez, ou qual foi o seu lucro depois da Imersão?" }
+      },
+      {
+        value: "Resultado comportamental",
+        followup: { id: "resultados_comportamental", type: "text", text: "Qual foi o resultado comportamental?" }
+      },
+      {
+        value: "Resultado de gerenciamento",
+        followup: { id: "resultados_gerenciamento", type: "text", text: "Qual foi o resultado de gerenciamento?" }
+      },
+      {
+        value: "Outro tipo de resultado",
+        followup: { id: "resultados_outro", type: "text", text: "Qual foi o resultado?" }
+      },
+      {
+        value: "Ainda não tive resultado",
+        followup: null
+      }
+    ]
+  },
+  {
+    id: "palestra_marcante",
+    type: "text",
+    text: "Qual a palestra que mais te marcou e por quê?"
+  },
+  {
+    id: "momento_marcante",
+    type: "text",
+    text: "Qual o momento do evento que mais te marcou?"
+  },
+  {
+    id: "proximos_encontros",
+    type: "text",
+    text: "O que você gostaria de ver nos próximos encontros da Imersão GKT?"
+  },
+  {
+    id: "faltou",
+    type: "options",
+    text: "Sentiu falta de algum tema, conteúdo ou direcionamento?",
+    options: ["Sim", "Não"],
+    followups: [
+      { condition: "Sim", question: { id: "faltou_oque", type: "text", text: "O que faltou?" } }
+    ]
+  },
+  {
+    id: "networking_exp",
+    type: "options",
+    text: "Como foi sua experiência com outros mentorados e network?",
+    options: ["Excelente", "Boa", "Média", "Fraca"]
+  },
+  {
+    id: "frase_resumo",
+    type: "text",
+    text: "Se tivesse que resumir a Imersão GKT em uma frase, qual seria?"
+  },
+  {
+    id: "antes_depois",
+    type: "text",
+    text: "Antes da Imersão, em qual momento do mercado financeiro você estava? E em qual momento você sente que está agora?"
+  },
+  {
+    id: "autoriza_depoimento",
+    type: "options",
+    text: "Você autoriza utilizarmos trechos das suas respostas como depoimento do evento?",
+    options: ["Sim", "Não"]
+  },
+  {
+    id: "mensagem_sacra",
+    type: "text",
+    text: "Mediante ao que você viu na Imersão GKT, o que você gostaria de falar para o Sacra?"
+  },
+
+  // ============== Lista de espera — próxima Imersão GKT ==============
+  {
+    id: "obrigado",
+    type: "message",
+    text: "Obrigado! Você acabou de ajudar a melhorar muito a próxima Imersão GKT 🦍"
+  },
+  {
+    id: "lista_espera",
+    type: "options",
+    text: "Quer entrar na lista de espera para a próxima Imersão em maio de 2027?",
+    hint: "Entra na lista de espera e tenha prioridade em receber todas as informações necessárias sobre a próxima Imersão GKT.",
+    options: ["Sim, quero entrar", "Agora não"],
+    followups: [
+      { condition: "Sim, quero entrar", question: { id: "waitlist_confirmado", type: "message", text: "Pronto, você está na lista 🦍 Em breve a gente te chama com data, valores e local antes de qualquer outra pessoa." } }
+    ]
+  }
+];
+
+/* =================================================================
+   ENGINE — não precisa editar abaixo
+   ================================================================= */
+
+const chatEl = document.getElementById('chat');
+const progressEl = document.getElementById('progress');
+const mainEl = document.querySelector('main');
+
+const state = {
+  queue: [],
+  responses: {},
+  total: 0,
+  done: 0,
+  startTime: new Date().toISOString()
+};
+
+function init() {
+  // Expande grupos em perguntas individuais
+  QUESTIONS.forEach(q => {
+    if (q.type === "group") {
+      state.queue.push({ ...q, _isGroupHeader: true });
+      q.items.forEach(item => {
+        state.queue.push({
+          id: `${q.id}_${item.id}`,
+          type: "scale",
+          range: q.range,
+          text: item.label,
+          _groupChild: true
+        });
+      });
+    } else {
+      state.queue.push(q);
+    }
+  });
+  state.total = state.queue.filter(q => !q._isGroupHeader).length;
+  next();
+}
+
+function updateProgress() {
+  const pct = (state.done / state.total) * 100;
+  progressEl.style.width = pct + '%';
+}
+
+function addBotMessage(text, hint) {
+  const row = document.createElement('div');
+  row.className = 'row bot';
+  row.innerHTML = `
+    <div class="avatar">GKT</div>
+    <div class="bubble">${escapeHtml(text)}${hint ? `<span class="hint">${escapeHtml(hint)}</span>` : ''}</div>
+  `;
+  chatEl.appendChild(row);
+  // O posicionamento da pergunta a 25% do topo é feito por positionQuestionAtTop
+  // no próximo passo do next(). Aqui não chamamos scrollToBottom pra evitar conflito.
+  return row;
+}
+
+function addUserMessage(text) {
+  const row = document.createElement('div');
+  row.className = 'row user';
+  row.innerHTML = `<div class="bubble">${escapeHtml(text)}</div>`;
+  chatEl.appendChild(row);
+  // Não rolar aqui — o positionQuestionAtTop da próxima pergunta cuida do posicionamento
+}
+
+function showTyping() {
+  const row = document.createElement('div');
+  row.className = 'row bot';
+  row.id = 'typing-row';
+  row.innerHTML = `<div class="avatar">GKT</div><div class="typing"><span></span><span></span><span></span></div>`;
+  chatEl.appendChild(row);
+  // Não rolar aqui — o positionQuestionAtTop cuida disso quando a pergunta entra
+}
+function hideTyping() {
+  const el = document.getElementById('typing-row');
+  if (el) el.remove();
+}
+
+function scrollToBottom() {
+  // Rola tanto o <main> (caso ele esteja com overflow) quanto a janela (caso o body cresça),
+  // pra funcionar tanto em desktop largo quanto em mobile pequeno.
+  requestAnimationFrame(() => {
+    if (mainEl) {
+      mainEl.scrollTo({ top: mainEl.scrollHeight, behavior: 'smooth' });
+    }
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  });
+}
+
+/**
+ * Posiciona a pergunta atual a ~22% do topo da área visível.
+ * Usa scrollTop direto (sem smooth) pra ser à prova de conflito.
+ */
+/**
+ * Garante que existe sempre um <div class="scroll-spacer"> no FINAL do chat.
+ * Esse div tem 90vh de altura e aumenta o scrollHeight do main, permitindo
+ * que a pergunta atual seja rolada até 22% do topo mesmo quando o conteúdo
+ * "natural" caberia inteiro na tela.
+ */
+function ensureScrollSpacer() {
+  let spacer = chatEl.querySelector('.scroll-spacer');
+  if (!spacer) {
+    spacer = document.createElement('div');
+    spacer.className = 'scroll-spacer';
+  } else {
+    spacer.remove();
+  }
+  // Sempre move pro fim do chat (caso adições novas tenham aparecido depois)
+  chatEl.appendChild(spacer);
+}
+
+function positionQuestionAtTop(element) {
+  if (!element || !mainEl) return;
+
+  // Garante o spacer no fim do chat (necessário pra haver scrollHeight suficiente)
+  ensureScrollSpacer();
+
+  // Marca como pergunta atual
+  document.querySelectorAll('.current-question').forEach(el => {
+    el.classList.remove('current-question');
+  });
+  element.classList.add('current-question');
+
+  // Aguarda 2 frames + um delay extra pra layout estabilizar 100%
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        const mainRect = mainEl.getBoundingClientRect();
+        const elementRect = element.getBoundingClientRect();
+        const currentScroll = mainEl.scrollTop;
+        const elementTopFromMainTop = elementRect.top - mainRect.top;
+        // 50% = pergunta atual fica no meio da tela; ~3-4 perguntas anteriores
+        // ficam visíveis acima, ~50% de espaço pros controles e folga abaixo
+        const desiredOffset = mainRect.height * 0.50;
+        const scrollDelta = elementTopFromMainTop - desiredOffset;
+        const targetScroll = Math.max(0, currentScroll + scrollDelta);
+
+        mainEl.scrollTop = targetScroll;
+      }, 100);
+    });
+  });
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
+async function next() {
+  if (state.queue.length === 0) return finish();
+
+  const q = state.queue.shift();
+
+  // Group header: só mostra a mensagem, vai pra próxima
+  if (q._isGroupHeader) {
+    showTyping();
+    await wait(500);
+    hideTyping();
+    const groupRow = addBotMessage(q.text, q.hint);
+    positionQuestionAtTop(groupRow);
+    await wait(300);
+    return next();
+  }
+
+  // Tipo "message": mensagem que aparece sem pedir resposta e segue sozinha
+  if (q.type === 'message') {
+    showTyping();
+    await wait(500);
+    hideTyping();
+    const msgRow = addBotMessage(q.text, q.hint);
+    positionQuestionAtTop(msgRow);
+    await wait(1200);
+    return next();
+  }
+
+  showTyping();
+  await wait(450);
+  hideTyping();
+  const questionRow = addBotMessage(q.text, q.hint);
+  await wait(150);
+
+  renderInput(q);
+
+  // Depois que tudo (pergunta + controles) está em tela, posiciona a pergunta
+  positionQuestionAtTop(questionRow);
+}
+
+function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function renderInput(q) {
+  if (q.type === 'text') {
+    // Campo de texto agora aparece dentro do chat, logo abaixo da pergunta
+    const container = document.createElement('div');
+    container.className = 'text-input-row';
+    container.id = 'current-controls';
+    const inner = document.createElement('div');
+    inner.className = 'wrap-inner';
+
+    const input = document.createElement('textarea');
+    input.className = 'text-input';
+    input.placeholder = 'Digite sua resposta...';
+    input.rows = 1;
+    input.addEventListener('input', () => {
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        submit();
+      }
+    });
+
+    const btn = document.createElement('button');
+    btn.className = 'send-btn';
+    btn.innerHTML = '&#10148;';
+    btn.onclick = submit;
+
+    inner.appendChild(input);
+    inner.appendChild(btn);
+    container.appendChild(inner);
+    chatEl.appendChild(container);
+    setTimeout(() => input.focus(), 150);
+
+    function submit() {
+      const val = input.value.trim();
+      if (!val) return;
+      handleAnswer(q, val);
+    }
+  }
+
+  else if (q.type === 'scale') {
+    // Botões 0-10 / 1-5 vão direto no chat, logo abaixo da pergunta
+    const [min, max] = q.range;
+    const total = max - min + 1;
+    const container = document.createElement('div');
+    container.className = 'inline-controls';
+    container.id = 'current-controls';
+    const inner = document.createElement('div');
+    inner.className = `wrap-inner`;
+    const grid = document.createElement('div');
+    grid.className = `scale-grid scale-${total === 11 ? '10' : '5'}`;
+    for (let i = min; i <= max; i++) {
+      const b = document.createElement('button');
+      b.className = 'scale-btn';
+      b.textContent = i;
+      b.onclick = () => handleAnswer(q, i);
+      grid.appendChild(b);
+    }
+    inner.appendChild(grid);
+    container.appendChild(inner);
+    chatEl.appendChild(container);
+  }
+
+  else if (q.type === 'options') {
+    // Botões de opção também vão direto no chat
+    const container = document.createElement('div');
+    container.className = 'inline-controls';
+    container.id = 'current-controls';
+    const inner = document.createElement('div');
+    inner.className = 'wrap-inner';
+    q.options.forEach(opt => {
+      const b = document.createElement('button');
+      b.className = 'option-btn';
+      b.textContent = opt;
+      b.onclick = () => handleAnswer(q, opt);
+      inner.appendChild(b);
+    });
+    container.appendChild(inner);
+    chatEl.appendChild(container);
+  }
+
+  else if (q.type === 'multi_options') {
+    // Múltipla escolha: aluno marca quantos tipos quiser e depois clica em "Continuar"
+    const container = document.createElement('div');
+    container.className = 'inline-controls';
+    container.id = 'current-controls';
+    const inner = document.createElement('div');
+    inner.className = 'wrap-inner multi-wrap';
+
+    const selected = new Set();
+    const buttons = [];
+
+    q.options.forEach((opt, idx) => {
+      const b = document.createElement('button');
+      b.className = 'option-btn multi-option-btn';
+      b.textContent = opt.value;
+      b.dataset.index = idx;
+      b.onclick = () => {
+        if (selected.has(idx)) {
+          selected.delete(idx);
+          b.classList.remove('selected');
+        } else {
+          selected.add(idx);
+          b.classList.add('selected');
+        }
+        confirmBtn.disabled = selected.size === 0;
+      };
+      buttons.push(b);
+      inner.appendChild(b);
+    });
+
+    const confirmBtn = document.createElement('button');
+    confirmBtn.className = 'option-btn confirm-btn';
+    confirmBtn.textContent = 'Continuar →';
+    confirmBtn.disabled = true;
+    confirmBtn.onclick = () => {
+      const chosenValues = [...selected].map(i => q.options[i].value);
+      const chosenFollowups = [...selected]
+        .map(i => q.options[i].followup)
+        .filter(Boolean);
+      handleMultiAnswer(q, chosenValues, chosenFollowups);
+    };
+    inner.appendChild(confirmBtn);
+
+    container.appendChild(inner);
+    chatEl.appendChild(container);
+  }
+
+  // Hook pra módulos externos (ex: modo demo) reagirem após a renderização
+  if (typeof window.__afterRenderInput === 'function') {
+    window.__afterRenderInput(q);
+  }
+}
+
+function handleMultiAnswer(q, values, followups) {
+  // Salva a resposta como string concatenada (fica fácil pra Excel/IA depois)
+  state.responses[q.id] = values.join(' | ');
+
+  // Remove os botões inline
+  const current = document.getElementById('current-controls');
+  if (current) current.remove();
+
+  // Mostra a resposta como balão único do usuário
+  addUserMessage(values.join(', '));
+
+  state.done++;
+  updateProgress();
+
+  // Empilha as perguntas de follow-up (na ordem de seleção) ANTES do resto da fila
+  // Usamos reverse() + unshift() pra manter a ordem original das opções escolhidas
+  followups.slice().reverse().forEach(fu => {
+    state.queue.unshift(fu);
+    state.total++;
+  });
+
+  setTimeout(next, 400);
+}
+
+function handleAnswer(q, value) {
+  state.responses[q.id] = value;
+
+  // Remove os botões inline (escala/opções) antes de mostrar a resposta
+  const current = document.getElementById('current-controls');
+  if (current) current.remove();
+
+  addUserMessage(String(value));
+  if (!q._groupChild || q._lastInGroup !== false) {
+    state.done++;
+    updateProgress();
+  } else {
+    state.done++;
+    updateProgress();
+  }
+
+  // Follow-ups condicionais (suporta múltiplas condições via array `followups`,
+  // ou uma única via `followup` por retro-compatibilidade)
+  const followupList = q.followups || (q.followup ? [q.followup] : []);
+  // Empilha na ordem inversa pra manter a ordem natural quando dão "unshift"
+  followupList
+    .filter(fu => fu.condition === value)
+    .reverse()
+    .forEach(fu => {
+      state.queue.unshift(fu.question);
+      state.total++;
+    });
+
+  setTimeout(next, 400);
+}
+
+async function finish() {
+  await wait(400);
+
+  // Fade-out das mensagens anteriores antes de limpar
+  chatEl.style.transition = 'opacity .5s ease';
+  chatEl.style.opacity = '0';
+  await wait(500);
+
+  // Apaga TODO o histórico de mensagens
+  chatEl.innerHTML = '';
+  chatEl.classList.add('finished');
+
+  // Rola pro topo
+  if (mainEl) mainEl.scrollTop = 0;
+
+  // Adiciona a tela final (única coisa visível agora)
+  const done = document.createElement('div');
+  done.className = 'done';
+  done.innerHTML = `
+    <div class="check">✓</div>
+    <h2>MUITO OBRIGADO!</h2>
+    <p class="thanks-msg">
+      Sua resposta vai me ajudar a fazer da próxima Imersão GKT a melhor de todas.<br>
+      De coração: valeu por confiar e por compartilhar a sua experiência comigo.
+    </p>
+    <div class="verse">
+      <blockquote>"Posso todas as coisas naquele que me fortalece."</blockquote>
+      <span class="verse-ref">Filipenses 4:13</span>
+    </div>
+    <p class="signature">— Sacra 🦍</p>
+  `;
+  chatEl.appendChild(done);
+
+  // Fade-in da tela final
+  await wait(50);
+  chatEl.style.opacity = '1';
+
+  // Envio dos dados
+  const payload = {
+    event: EVENT_NAME,
+    startedAt: state.startTime,
+    submittedAt: new Date().toISOString(),
+    userAgent: navigator.userAgent,
+    responses: state.responses
+  };
+
+  // Salva localmente como backup
+  try {
+    const backupKey = `gkt_nps_${Date.now()}`;
+    localStorage.setItem(backupKey, JSON.stringify(payload));
+  } catch (e) {}
+
+  // Envia pro webhook se configurado
+  if (WEBHOOK_URL) {
+    try {
+      await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch (e) {
+      console.error('Erro ao enviar:', e);
+    }
+  } else {
+    console.log('Payload (WEBHOOK_URL vazio — colando aqui pra debug):', payload);
+  }
+}
+
+/* =================================================================
+   MODO DEMO — responde sozinho com respostas aleatórias
+   Ativa adicionando ?demo=1 na URL (ex: index.html?demo=1)
+   Precisa ser configurado ANTES de init(), por isso fica aqui em cima.
+   ================================================================= */
+const DEMO_MODE = new URLSearchParams(window.location.search).get('demo') === '1';
+const DEMO_DELAY = 1500; // tempo entre uma resposta e a próxima (ms)
+
+const RESPOSTAS_TEXTO = [
+  "Achei muito bom, agregou muito.",
+  "Conteúdo direto e prático, valeu cada minuto.",
+  "Saí do evento com a cabeça fervilhando de ideias.",
+  "Foi um divisor de águas pra mim.",
+  "A energia do grupo foi incrível.",
+  "Aprendi mais nessa imersão do que em meses estudando sozinho.",
+  "O Sacra é um cara que joga limpo, sem firula. Por isso confio.",
+  "Tô aplicando o gerenciamento desde a segunda-feira seguinte.",
+  "Quero mais momentos práticos no próximo evento.",
+  "Foi bem além do que eu esperava, parabéns à equipe.",
+  "Sai daqui com clareza sobre o próximo passo do meu trade.",
+  "Mudou minha forma de enxergar o mercado."
+];
+const NOMES_DEMO = ["João Demo Silva", "Maria Teste Souza", "Pedro Exemplo"];
+const EMAILS_DEMO = ["demo@exemplo.com", "teste@gmail.com"];
+const FONES_DEMO = ["(11) 98765-4321", "(21) 99988-7766"];
+
+function pegarAleatorio(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function gerarRespostaDemo(q) {
+  if (q.type === 'scale') {
+    const [min, max] = q.range;
+    if (Math.random() < 0.6) return Math.floor(max * 0.85 + Math.random() * (max * 0.15));
+    return Math.floor(min + Math.random() * (max - min + 1));
+  }
+  if (q.type === 'options') return pegarAleatorio(q.options);
+  if (q.type === 'multi_options') {
+    const qtd = Math.random() < 0.6 ? 2 : 1;
+    const idx = [];
+    while (idx.length < qtd && idx.length < q.options.length) {
+      const i = Math.floor(Math.random() * q.options.length);
+      if (!idx.includes(i)) idx.push(i);
+    }
+    return idx;
+  }
+  if (q.type === 'text') {
+    const id = q.id || '';
+    if (id.includes('nome')) return pegarAleatorio(NOMES_DEMO);
+    if (id.includes('email')) return pegarAleatorio(EMAILS_DEMO);
+    if (id.includes('telefone') || id.includes('fone')) return pegarAleatorio(FONES_DEMO);
+    return pegarAleatorio(RESPOSTAS_TEXTO);
+  }
+  return null;
+}
+
+if (DEMO_MODE) {
+  console.log('🤖 [DEMO MODE ATIVO] Respondendo automaticamente...');
+
+  // Instala o hook que será chamado depois de cada renderInput
+  window.__afterRenderInput = function(q) {
+    setTimeout(() => {
+      const resposta = gerarRespostaDemo(q);
+
+      if (q.type === 'scale' || q.type === 'options') {
+        const buttons = document.querySelectorAll('#current-controls button');
+        let alvo = null;
+        buttons.forEach(b => {
+          if (b.textContent.trim() === String(resposta)) alvo = b;
+        });
+        if (alvo) alvo.click();
+      }
+
+      else if (q.type === 'multi_options') {
+        const buttons = document.querySelectorAll('#current-controls .multi-option-btn');
+        resposta.forEach(idx => {
+          if (buttons[idx]) buttons[idx].click();
+        });
+        setTimeout(() => {
+          const confirm = document.querySelector('#current-controls .confirm-btn');
+          if (confirm && !confirm.disabled) confirm.click();
+        }, 600);
+      }
+
+      else if (q.type === 'text') {
+        const input = document.querySelector('#current-controls textarea');
+        const sendBtn = document.querySelector('#current-controls .send-btn');
+        if (input && sendBtn) {
+          let i = 0;
+          const intervalo = setInterval(() => {
+            input.value += resposta[i];
+            input.dispatchEvent(new Event('input'));
+            i++;
+            if (i >= resposta.length) {
+              clearInterval(intervalo);
+              setTimeout(() => sendBtn.click(), 400);
+            }
+          }, 30);
+        }
+      }
+    }, DEMO_DELAY);
+  };
+}
+
+// Start — agora que TUDO está configurado (incluindo demo mode), inicia o engine
+const SHOW_FINISH_DIRECT = new URLSearchParams(window.location.search).get('finish') === '1';
+if (SHOW_FINISH_DIRECT) {
+  finish();
+} else {
+  init();
+}
+
+/* =================================================================
+   Hover do gorila — detecta mouse na região central da tela
+   ================================================================= */
+(function setupGorilaHover() {
+  const body = document.body;
+  let isOver = false;
+  let spinTimer = null;
+
+  function isOverGorila(x, y) {
+    // O gorila ocupa 65vmin centralizado em (50%, 55%)
+    const vmin = Math.min(window.innerWidth, window.innerHeight);
+    const radius = (vmin * 0.65) / 2;
+    const cx = window.innerWidth / 2;
+    const cy = window.innerHeight * 0.55;
+    const dx = x - cx;
+    const dy = y - cy;
+    return (dx * dx + dy * dy) < (radius * radius);
+  }
+
+  document.addEventListener('mousemove', (e) => {
+    const overNow = isOverGorila(e.clientX, e.clientY);
+    if (overNow && !isOver) {
+      isOver = true;
+      body.classList.add('gorila-hover');
+      // Dispara o giro 1x e remove a classe depois pra permitir disparar de novo
+      body.classList.remove('gorila-spin');
+      void body.offsetWidth; // força reflow pra reiniciar animação
+      body.classList.add('gorila-spin');
+      clearTimeout(spinTimer);
+      spinTimer = setTimeout(() => body.classList.remove('gorila-spin'), 1400);
+    } else if (!overNow && isOver) {
+      isOver = false;
+      body.classList.remove('gorila-hover');
+    }
+  });
+
+  // Quando o mouse sai da janela, garante reset
+  document.addEventListener('mouseleave', () => {
+    isOver = false;
+    body.classList.remove('gorila-hover');
+  });
+})();
+</script>
+</body>
+</html>
