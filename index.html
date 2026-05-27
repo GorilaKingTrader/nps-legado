@@ -529,27 +529,36 @@
     border-left: 3px solid var(--color-accent);
     padding: 22px 26px;
     margin: 36px auto;
-    max-width: 480px;
+    max-width: 520px;
     background: rgba(34, 197, 94, 0.08);
     border-radius: 0 12px 12px 0;
     text-align: left;
     box-shadow: 0 0 30px rgba(34, 197, 94, 0.08);
   }
+  .done .verse-intro {
+    font-family: var(--font-display);
+    font-size: 12px;
+    color: var(--color-accent);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
   .done .verse blockquote {
     font-family: var(--font-question);
     font-style: italic;
-    font-size: 18px;
-    line-height: 1.55;
+    font-size: 19px;
+    line-height: 1.45;
     color: var(--color-text);
-    margin: 0 0 10px 0;
-  }
-  .done .verse-ref {
-    display: block;
-    font-size: 13px;
-    color: var(--color-accent);
+    margin: 0 0 12px 0;
     font-weight: 600;
-    letter-spacing: 1px;
-    text-transform: uppercase;
+  }
+  .done .verse-extra {
+    display: block;
+    font-size: 14px;
+    color: var(--color-muted);
+    font-style: italic;
+    line-height: 1.5;
   }
   .done .signature {
     color: var(--color-accent);
@@ -1188,8 +1197,9 @@ async function finish() {
       De coração: valeu por confiar e por compartilhar a sua experiência comigo.
     </p>
     <div class="verse">
-      <blockquote>"Posso todas as coisas naquele que me fortalece."</blockquote>
-      <span class="verse-ref">Filipenses 4:13</span>
+      <div class="verse-intro">E lembre-se</div>
+      <blockquote>"Quem não desiste se torna merecedor de realizações."</blockquote>
+      <span class="verse-extra">De realizar sonhos. Então apenas continue.</span>
     </div>
     <p class="signature">— Sacra 🦍</p>
   `;
